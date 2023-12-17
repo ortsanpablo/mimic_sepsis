@@ -327,7 +327,7 @@ for ce_df in ce_dfs:
 # ########################################################################
 
 print(' Full ICU --  Making an array with all unique charttime (1 per row) and all items in columns.')
-reformat = np.nan*np.ones((2000000,68))  # Final table 
+reformat = np.nan*np.ones((8000000,68))  # Final table 
 qstime = dict()
 winb4 = 25   # Lower limit for inclusion of data (24h before time flag)
 winaft = 49  # Upper limit (48h after)
@@ -337,7 +337,7 @@ for icustayid in icustayidlist:
     qstime[icustayid] = np.zeros(4)
     bar.update()
     qst = onset[icustayid][2] #flag for presumed infection
-    if qst > 0:  # if we have a flag
+    if not qst > 0:  # if we have no flag
         d1 = demog.loc[demog['icustay_id'] == icustayid, ['age', 'dischtime']].values[0] # Age of patient + discharge time
         if d1[0] > 6574:  # If older than 18 years old
             # CHARTEVENTS
@@ -363,19 +363,19 @@ for icustayid in icustayidlist:
                 temp=ce90100
             temp = temp[temp['icustay_id'] == icustayid]
 
-            ii = (temp['charttime'] >= qst - (winb4+4)*3600) & (temp['charttime'] <= qst + (winaft+4)*3600) # Time period of interest -4h and +4h
+            ii = (temp['charttime'] >= 0 & (temp['charttime'] <= (25 + (winaft+4))*3600)) # Time period of interest -4h and +4h
             temp = temp.loc[ii]   # Only time period of interest
 
             # LABEVENTS
             ii = labU['icustay_id'] == icustayid
             temp2 = labU.loc[ii]
-            ii = (temp2['charttime'] >= qst - (winb4+4)*3600) & (temp2['charttime'] <= qst + (winaft+4)*3600) # Time period of interest -4h and +4h
+            ii = (temp2['charttime'] >= 0 & (temp2['charttime'] <= (25 + (winaft+4))*3600)) # Time period of interest -4h and +4h
             temp2 = temp2.loc[ii]   # Only time period of interest
 
             # Mech Vent + ?extubated
             ii = MV['icustay_id'] == icustayid
             temp3 = MV.loc[ii]
-            ii = (temp3['charttime'] >= qst - (winb4+4)*3600) & (temp3['charttime'] <= qst + (winaft+4)*3600) # Time period of interest -4h and +4h
+            ii = (temp3['charttime'] >= 0 & (temp3['charttime'] <= (25 + (winaft+4))*3600)) # Time period of interest -4h and +4h
             temp3 = temp3.loc[ii]   #only time period of interest
             t = np.unique(pd.concat([temp['charttime'], temp2['charttime'], temp3['charttime']], ignore_index=True).values) # List of unique timestamps from all 3 sources / sorted in ascending order
  
@@ -408,11 +408,11 @@ for icustayid in icustayidlist:
                         reformat[irow, 67]= np.nan
                     irow += 1
 
-                qstime[icustayid][0] = qst # Flag for presumed infection / this is time of sepsis if SOFA >=2 for this patient
+                qstime[icustayid][0] = 0 # Flag for presumed infection / this is time of sepsis if SOFA >=2 for this patient
                 # SAVE FIRST and LAST TIMESTAMPS, in QSTIME, for each ICUSTAYID
-                qstime[icustayid][1] = t[0]   # First timestamp
-                qstime[icustayid][2] = t[-1]  # Last timestamp
-                qstime[icustayid][3] = d1[1]  # Discharge time
+                qstime[icustayid][1] = 0   # First timestamp
+                qstime[icustayid][2] = 0  # Last timestamp
+                qstime[icustayid][3] = 0  # Discharge time
 
 reformat = np.delete(reformat, range(irow, len(reformat)) ,axis=0)  # Delete unused rows
 
@@ -997,7 +997,7 @@ print('Final patient count:', sepsis.shape[0])
 
 # Save cohort
 if pargs.save_intermediate:
-    sepsis.to_csv('new_sepsis_mimiciii.csv', index=False) 
+    sepsis.to_csv('no_sepsis_mimiciii.csv', index=False) 
 
 ########################################################################
 #           INITIAL REFORMAT WITH CHARTEVENTS, LABS AND MECHVENT
@@ -1006,7 +1006,7 @@ if pargs.save_intermediate:
 ################## IMPORTANT !!!!!!!!!!!!!!!!!!
 # Here we use -24 -> +48 to define the MDP
 print('Sepsis Cohort -- Making an array with all unique charttime (1 per row) and all items in columns.')
-reformat = np.nan*np.ones((2000000,69))  #final table 
+reformat = np.nan*np.ones((8000000,69))  #final table 
 qstime = dict()
 winb4 = 25   #lower limit for inclusion of data (24h before time flag)
 winaft = 49  # upper limit (48h after)
@@ -1040,19 +1040,19 @@ for icustayidrow in range(1, sepsis.shape[0]+1):
         temp=ce90100
     temp = temp[temp['icustay_id'] == icustayid]
 
-    ii = (temp['charttime'] >= qst - (winb4+4)*3600) & (temp['charttime'] <= qst + (winaft+4)*3600) #time period of interest -4h and +4h
+    ii = (temp['charttime'] >= 0 & (temp['charttime'] <= (25 + (winaft+4))*3600)) #time period of interest -4h and +4h
     temp = temp.loc[ii]   #only time period of interest
 
     # LAB EVENTS
     ii = labU['icustay_id'] == icustayid
     temp2 = labU.loc[ii]
-    ii = (temp2['charttime'] >= qst - (winb4+4)*3600) & (temp2['charttime'] <= qst + (winaft+4)*3600) #time period of interest -4h and +4h
+    ii = (temp2['charttime'] >= 0 & (temp2['charttime'] <= (25 + (winaft+4))*3600)) #time period of interest -4h and +4h
     temp2 = temp2.loc[ii]   #only time period of interest
 
     # Mech Vent + ?extubated
     ii = MV['icustay_id'] == icustayid
     temp3 = MV.loc[ii]
-    ii = (temp3['charttime'] >= qst - (winb4+4)*3600) & (temp3['charttime'] <= qst + (winaft+4)*3600) # Time period of interest -4h and +4h
+    ii = (temp3['charttime'] >= 0 & (temp3['charttime'] <= (25 + (winaft+4))*3600)) # Time period of interest -4h and +4h
     temp3 = temp3.loc[ii]   #only time period of interest
     
     t = np.unique(pd.concat([temp['charttime'], temp2['charttime'], temp3['charttime']], ignore_index=True).values) # List of unique timestamps from all 3 sources / sorted in ascending order
@@ -1087,11 +1087,11 @@ for icustayidrow in range(1, sepsis.shape[0]+1):
                 reformat[irow, 68]= np.nan
             irow += 1
 
-        qstime[icustayid][0] = qst # Flag for presumed infection / this is time of sepsis if SOFA >=2 for this patient
+        qstime[icustayid][0] = 0 # Flag for presumed infection / this is time of sepsis if SOFA >=2 for this patient
         # WE SAVE FIRST and LAST TIMESTAMPS, in QSTIME, for each ICUSTAYID
-        qstime[icustayid][1] = t[0]   # First timestamp
-        qstime[icustayid][2] = t[-1]  # Last timestamp
-        qstime[icustayid][3] = demog.loc[demog['icustay_id'] == icustayid, 'dischtime'].values[0] # Discharge time
+        qstime[icustayid][1] = 0  # First timestamp
+        qstime[icustayid][2] = 0 # Last timestamp
+        qstime[icustayid][3] = 0 # Discharge time
 
 reformat = np.delete(reformat, range(irow, len(reformat)) ,axis=0)  # Remove unused rows
 
@@ -1609,7 +1609,7 @@ reformat4t['SIRS'] = newcols_sirs[0]
 MIMICtable = reformat4t.copy()
 #if pargs.save_intermediate:
     #MIMICtable.to_csv('MIMICtable.csv', index=False)
-MIMICtable.to_csv('MIMICtable_1hr_bucket.csv', index=False)
+MIMICtable.to_csv('no_sepsis_MIMICtable_1hr_bucket.csv', index=False)
 
 #################   Convert training data and compute conversion factors    ######################
 
@@ -1707,7 +1707,7 @@ for i in data['traj'].keys():
         all_data[-1].append(data['traj'][i]['actions'][ctr])
         all_data[-1].append(data['traj'][i]['rewards'][ctr])
 df = pd.DataFrame(all_data, columns=col_names)
-df.to_csv('sepsis_final_data_withTimes_1hr_bucket.csv', index=False)
+df.to_csv('no_sepsis_final_data_withTimes_1hr_bucket.csv', index=False)
 
 if pargs.process_raw: # If we want to convert the MIMICraw data into trajectories, repeat the above code without normalizing
     raw_df              = pd.DataFrame(MIMICraw, columns=colmeta+colbin+colnorm+collog)
@@ -1763,6 +1763,6 @@ if pargs.process_raw: # If we want to convert the MIMICraw data into trajectorie
             all_data[-1].append(data['traj'][i]['actions'][ctr])
             all_data[-1].append(data['traj'][i]['rewards'][ctr])
     df = pd.DataFrame(all_data, columns=col_names)
-    df.to_csv('sepsis_final_data_RAW_withTimes.csv', index=False)
+    df.to_csv('no_sepsis_final_data_RAW_withTimes.csv', index=False)
 
 ####################################################################################################################################
